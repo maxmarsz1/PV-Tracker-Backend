@@ -18,3 +18,20 @@ class ListCreatePostView(APIView):
             post.save()
             return Response(post.data)
         return Response('Something went wrong', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdateDestroyPostView(APIView):
+    def put(self, request, pk):
+        post = Post.objects.get(id=pk)
+        serialized = PostSerializer(data=request.data, instance=post)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        post = Post.objects.get(id=pk)
+        post.delete()
+        if post.id is None:
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
