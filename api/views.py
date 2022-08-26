@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.contrib.auth.models import User
+from django.utils.timezone import now
 
 from posts.models import Post
 from .serializers import PostSerializer, UserSerializer
@@ -23,8 +24,29 @@ class UserRegisterView(APIView):
 class ListCreatePostView(APIView):
     def get(self, request):
         posts = Post.objects.all()
-        posts_serialized = PostSerializer(posts, many=True)
-        return Response(posts_serialized.data)
+        months = posts.dates('date', 'month')
+        sorted_posts = {}
+
+        for month in months:
+            for post in posts:
+                if post.date.year == month.year and post.date.month == month.month:
+                    if sorted_posts.get(str(month)) is None:
+                        sorted_posts[str(month)] = []
+                    sorted_posts[str(month)].append(PostSerializer(post).data)
+
+        # print(sorted_posts)
+
+        # for month in months:
+        #     if sorted_posts.get(month.year) is None:
+        #         sorted_posts[month.year] = []
+        #     sorted_posts[month.year].append({month.month: [PostSerializer(e).data for e in posts if e.date.year == month.year and e.date.month == month.month]})
+        
+        # for key, value in sorted_posts.items():
+        #     print(key, value)
+        # print(now().year)
+        
+        # posts_serialized = PostSerializer(posts, many=True)
+        return Response(sorted_posts)
 
     def post(self, request):
         post = PostSerializer(data=request.data)

@@ -8,3 +8,6 @@ class Post(models.Model):
     received = models.FloatField()
     produced = models.FloatField()
     date = models.DateField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-date']
