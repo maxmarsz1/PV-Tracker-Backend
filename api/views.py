@@ -8,15 +8,6 @@ from posts.models import Post
 from .serializers import PostSerializer, UserSerializer
 
 
-def sort_posts(posts):
-    months = posts.dates('date', 'month')
-    sorted_posts = {}
-    for month in months:
-        if not sorted_posts.get(month.month):
-            sorted_posts[month.month] = [PostSerializer(post).data for post in posts if post.date.year == month.year and post.date.month == month.month]
-    return sorted_posts
-
-
 class UserRegisterView(APIView):
     def post(self, request):
         username = request.data['username']
@@ -33,6 +24,7 @@ class UserRegisterView(APIView):
 class CreatePostView(APIView):
     def post(self, request):
         post = PostSerializer(data=request.data)
+        print(request.data)
         if post.is_valid():
             post.save()
             return Response(post.data)
@@ -41,8 +33,17 @@ class CreatePostView(APIView):
 
 class ListUpdateDestroyPostView(APIView):
     def get(self, request, pk):
+        data = {}
         posts = Post.objects.filter(date__year=pk)
-        return Response(sort_posts(posts))
+        months = posts.dates('date', 'month')
+        data['years'] = [date.year for date in Post.objects.all().dates('date', 'year')]
+        sorted_posts = {}
+        for month in months:
+            if not sorted_posts.get(month.month):
+                sorted_posts[month.month] = [PostSerializer(post).data for post in posts if post.date.year == month.year and post.date.month == month.month]
+        data['posts'] = sorted_posts
+
+        return Response(data)
 
 
     def patch(self, request, pk):
@@ -56,7 +57,7 @@ class ListUpdateDestroyPostView(APIView):
 
     def delete(self, request, pk):
         post = Post.objects.get(id=pk)
-        # post.delete()
-        # if post.id is None:
-        return Response(status=status.HTTP_200_OK)
+        post.delete()
+        if post.id is None:
+            return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
