@@ -24,7 +24,6 @@ class UserRegisterView(APIView):
 class CreatePostView(APIView):
     def post(self, request):
         post = PostSerializer(data=request.data)
-        print(request.data)
         if post.is_valid():
             post.save()
             return Response(post.data)
