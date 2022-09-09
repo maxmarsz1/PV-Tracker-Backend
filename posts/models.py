@@ -17,7 +17,11 @@ class Post(models.Model):
     received = models.FloatField(blank=True, default=0)
     sent = models.FloatField(blank=True, default=0)
     autoconsumption = models.FloatField(blank=True, default=0)
+    autoconsumption_percentage = models.FloatField(blank=True, default=0)
     consumption = models.FloatField(blank=True, default=0)
+    consumption_average = models.FloatField(blank=True, default=0)
+    
+
 
     date = models.DateField()
 
@@ -30,10 +34,17 @@ class Post(models.Model):
         unique_together = ('user', 'date')
 
 
+    def clean(self):
+        try:
+            Post.objects.get(date__month=self.date.month, date__year=self.date.year, user=self.user)
+            raise ValidationError('Post on this date already exists')
+        except Post.DoesNotExist:
+            pass
+
+
     def save(self, *args, **kwargs):
         all_posts = Post.objects.filter(user=self.user)     
         self.date = datetime.date(self.date.year, self.date.month, 1)
-        self.full_clean()
 
         #Setting previous month (and year if month was january)
         previous_post_date = self.date - relativedelta.relativedelta(months=1)
