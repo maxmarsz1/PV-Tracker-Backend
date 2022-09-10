@@ -7,4 +7,4 @@ def calculate_month(post, previous_post):
     post.autoconsumption = post.produced - post.sent
     post.autoconsumption_percentage = (post.produced - post.sent) / post.produced
     post.consumption = post.produced + post.received - post.sent
-    post.consumption_average = (post.produced + post.received - post.sent) / calendar.monthrange(post.date.year, post.date.month)[1]
+    post.consumption_average = round((post.produced + post.received - post.sent) / calendar.monthrange(post.date.year, post.date.month)[1], 2)

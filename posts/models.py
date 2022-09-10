@@ -20,29 +20,28 @@ class Post(models.Model):
     autoconsumption_percentage = models.FloatField(blank=True, default=0)
     consumption = models.FloatField(blank=True, default=0)
     consumption_average = models.FloatField(blank=True, default=0)
-    
-
-
     date = models.DateField()
 
-    def __str__(self):
-        return f'{self.date.month}/{self.date.year}: {self.user.username}'
-    
 
     class Meta:
         ordering = ['-date']
         unique_together = ('user', 'date')
 
 
+    def __str__(self):
+        return f'{self.date.month}/{self.date.year}: {self.user.username}'
+    
+
     def clean(self):
         try:
-            Post.objects.get(date__month=self.date.month, date__year=self.date.year, user=self.user)
-            raise ValidationError('Post on this date already exists')
+            if Post.objects.get(date__month=self.date.month, date__year=self.date.year, user=self.user).id != self.id:
+                raise ValidationError('Post on this date already exists')
         except Post.DoesNotExist:
             pass
 
 
     def save(self, *args, **kwargs):
+        user_config = self.user.userconfig_set.first()
         all_posts = Post.objects.filter(user=self.user)     
         self.date = datetime.date(self.date.year, self.date.month, 1)
 

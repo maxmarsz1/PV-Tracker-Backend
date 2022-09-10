@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'api',
     'posts.apps.PostsConfig',
+    'user_settings.apps.UserSettingsConfig',
 
     'rest_framework',
     'rest_framework_simplejwt',
