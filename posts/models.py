@@ -97,6 +97,7 @@ class Post(models.Model):
 
             #Manualy adding current post data
             self.energy_surplus += (self.sent * energy_sent_back) - self.received
+            self.energy_surplus = round(self.energy_surplus, 2)
 
         #If there is no post in previous month we cannot calculate this month stats
         except Post.DoesNotExist as e:
