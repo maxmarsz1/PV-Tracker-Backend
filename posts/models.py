@@ -13,14 +13,14 @@ class Post(models.Model):
 
     #Fields to fill
     #Energy stats for this month
-    produced_all = models.FloatField()
-    received_all = models.FloatField()
-    sent_all = models.FloatField()
+    produced_all = models.FloatField(blank=True)
+    received_all = models.FloatField(blank=True)
+    sent_all = models.FloatField(blank=True)
 
     #Energy stats from meter
-    produced = models.FloatField(blank=True, default=0)
-    received = models.FloatField(blank=True, default=0)
-    sent = models.FloatField(blank=True, default=0)
+    produced = models.FloatField(blank=True)
+    received = models.FloatField(blank=True)
+    sent = models.FloatField(blank=True)
     date = models.DateField()
 
     #Calculated fields
@@ -55,6 +55,9 @@ class Post(models.Model):
     
 
     def clean(self):
+        #Checking if all necessary values are filled
+        if self.produced is None and self.produced_all is None or self.received is None and self.received_all is None or self.sent is None and self.sent_all is None:
+            raise ValidationError('You need to fill required fields')
         try:
             if Post.objects.get(date__month=self.date.month, date__year=self.date.year, user=self.user).id != self.id:
                 raise ValidationError('Post on this date already exists')
@@ -63,12 +66,11 @@ class Post(models.Model):
 
 
     def save(self, *args, **kwargs):
-        user_config = self.user.userconfig
-        energy_sent_back = 0.8
-        if user_config.pv_power > 10:
-            energy_sent_back = 0.7
+        #Setting variables
+        energy_sent_back = 0.7 if self.user.userconfig.pv_power > 10 else 0.8
+        user_posts = Post.objects.filter(user=self.user)
 
-        all_posts = Post.objects.filter(user=self.user)     
+        #Setting post date to first day of the month to avoid multiple post in one month (easy validation)
         self.date = datetime.date(self.date.year, self.date.month, 1)
 
         #Saving next month post creates a chain that we control with this date
@@ -77,38 +79,48 @@ class Post(models.Model):
         if last_date is None:
             last_date = self.date + relativedelta.relativedelta(years=+1)
 
-        #Getting dates month back and month forward 
+        #Getting dates month back and month forward to calculate
         previous_post_date = self.date - relativedelta.relativedelta(months=1)
         next_post_date = self.date + relativedelta.relativedelta(months=1)
 
         try:
-            previous_post = all_posts.get(date__month=previous_post_date.month, date__year=previous_post_date.year)
+            previous_post = user_posts.get(date__month=previous_post_date.month, date__year=previous_post_date.year)
 
-            #Gettting posts from one year back
+            #Gettting posts from one year back to calculate energy surplus
+            #Current post isn't included because it could be edited thus it might differ
             date_year_back = self.date + relativedelta.relativedelta(years=-1, months=+1)
-            year_back_posts = all_posts.filter(date__range=[date_year_back, self.date])
-            print('saving')
+            year_back_posts = user_posts.filter(date__range=[date_year_back, previous_post_date])
+            
             #Calculating this month stats
             calculate_month(self, previous_post)
-            self.energy_surplus = sum([post.sent * energy_sent_back for post in year_back_posts])
+            self.energy_surplus = sum([(post.sent * energy_sent_back) - post.received for post in year_back_posts])
 
-            #If post is new it's not included in all_posts so we have to add manualy sent energy
-            if self.id is None:
-                self.energy_surplus += self.sent * energy_sent_back
-
+            #Manualy adding current post data
+            self.energy_surplus += (self.sent * energy_sent_back) - self.received
 
         #If there is no post in previous month we cannot calculate this month stats
         except Post.DoesNotExist as e:
+            if self.sent_all is None:
+                self.sent_all = self.sent
+            else:
+                self.sent = self.sent_all
+            if self.received_all is None:
+                self.received_all = self.received
+            else:
+                self.received = self.received_all
+            if self.produced_all is None:
+                self.produced_all = self.produced
+            else:
+                self.produced = self.produced_all
             print('There is no post in previous month')
             pass
         except Exception as e:
             print(e)
 
-        #Saving here because next post won't have current data
-        post = super(Post, self).save()
+        super(Post, self).save()
 
         try:
-            next_post = all_posts.get(date__month=next_post_date.month, date__year=next_post_date.year)
+            next_post = user_posts.get(date__month=next_post_date.month, date__year=next_post_date.year)
 
             #Check if last_date is later than next post date avoiding goingh through all posts
             if last_date > next_post.date:
