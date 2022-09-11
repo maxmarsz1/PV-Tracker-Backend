@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 
 class UserConfig(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     pv_power = models.FloatField(("Plant Efficiency (kW)"), default=0)
     settlement_month = models.IntegerField(("Month of settlement (1-12)"), default=1)
 
