@@ -23,26 +23,30 @@ class Post(models.Model):
     sent = models.FloatField(blank=True)
     date = models.DateField()
 
-    #Calculated fields
-    #Energy used just after production
-    #produced - sent
+    # Calculated fields
+    # Energy used just after production
+    # produced - sent
     autoconsumption = models.FloatField(blank=True, default=0, editable=False)
 
-    #Percentage of autoconsumption from production
-    #(produced - sent) / produced
+    # Percentage of autoconsumption from production
+    # autoconsumption / produced
     autoconsumption_percentage = models.FloatField(blank=True, default=0, editable=False)
 
-    #Energy used this month
-    #produced - sent + received
+    # Energy used this month
+    # produced - sent + received
     consumption = models.FloatField(blank=True, default=0, editable=False)
 
-    #Average energy used per day in month
-    #(produce - sent + received) / count of days in month
+    # Average energy used per day in month
+    # consumption / count of days in month
     consumption_average = models.FloatField(blank=True, default=0, editable=False)
 
-    #Deferred energy
-    #sum of (sent * 0.8 or 0.7(Based on rules user is on)) from each month year back
+    # Deferred energy
+    # sum of (sent * 0.8 or 0.7(Based on rules user is on)) from each month year back
     energy_surplus = models.FloatField(blank=True, default=0, editable=False)
+
+    # Deferred energy in cash
+    # energy_surplus * user.userconfig.energy_buy_price
+    energy_surplus_cash = models.FloatField(blank=True, default=0, editable=False)
 
 
     class Meta:
