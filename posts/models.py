@@ -76,54 +76,31 @@ class Post(models.Model):
         # Setting post date to first day of the month to avoid multiple post in one month (easy validation)
         self.date = datetime.date(self.date.year, self.date.month, 1)
 
-        try:
-            # Runs if this is base post - post that is created or edited
-            # We're later updating next post with new data, so when we're saving next post we don't want
-            # this to calculate same month again
-            if not kwargs.get('last_date'):
-                # Calculating this month stats
-                calculate_month(self, user_posts)
+        # Saving next month post creates a chain that we control with this date
+        # Last post that we will be saving cannot be past one year ahead from starter post
+        last_date = kwargs.get('last_date')
+       
+        # Runs if this is base post - post that is created or edited
+        # We're later updating next post with new data, so when we're saving next post we don't want
+        # this to calculate same month again
+        if last_date is None:
+            # Calculating this month stats
+            calculate_month(self, user_posts, Post)
+            last_date = self.date + relativedelta.relativedelta(years=+1)
 
-        # If there is no post in previous month we cannot calculate this month stats
-        except Post.DoesNotExist as e:
-            if self.produced_all is None:
-                self.produced_all = self.produced + self.user.userconfig.produced_start
-            else:
-                self.produced = self.produced_all - self.user.userconfig.produced_start
-
-            if self.received_all is None:
-                self.received_all = self.received + self.user.userconfig.received_start
-            else:
-                self.received = self.received_all -  self.user.userconfig.received_start
-
-            if self.sent_all is None:
-                self.sent_all = self.sent + self.user.userconfig.sent_start
-            else:
-                self.sent = self.sent_all - self.user.userconfig.sent_start
-            # print('There is no post in previous month')
-            pass
-        except Exception as e:
-            print(e)
-        
         super(Post, self).save()
 
         try:
             next_post_date = self.date + relativedelta.relativedelta(months=1)
             next_post = user_posts.get(date__month=next_post_date.month, date__year=next_post_date.year)
-            # Saving next month post creates a chain that we control with this date
-            # Last post that we will be saving cannot be past one year ahead from starter post
-            last_date = kwargs.get('last_date')
-            if last_date is None:
-                last_date = self.date + relativedelta.relativedelta(years=+1)
 
             # Check if last_date is later than next post date avoiding goingh through all posts
             if last_date > next_post.date:
-                calculate_month(next_post, user_posts)
+                calculate_month(next_post, user_posts, Post)
                 next_post.save(last_date=last_date)
 
         # If there is no post in next month we cannot calculate stats for it
-        except Post.DoesNotExist as e:
-            # print('There is no post in next month')
+        except Post.DoesNotExist:
             pass
         except Exception as e:
             print(e)
