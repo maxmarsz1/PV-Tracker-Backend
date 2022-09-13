@@ -55,7 +55,7 @@ class Post(models.Model):
     
 
     def clean(self):
-        #Checking if all necessary values are filled
+        # Checking if all necessary values are filled
         if self.produced is None and self.produced_all is None or self.received is None and self.received_all is None or self.sent is None and self.sent_all is None:
             raise ValidationError('You need to fill required fields')
         try:
@@ -66,71 +66,60 @@ class Post(models.Model):
 
 
     def save(self, *args, **kwargs):
-        #Setting variables
-        energy_sent_back = 0.7 if self.user.userconfig.pv_power > 10 else 0.8
+        # Setting variables
         user_posts = Post.objects.filter(user=self.user)
 
-        #Setting post date to first day of the month to avoid multiple post in one month (easy validation)
+        # Setting post date to first day of the month to avoid multiple post in one month (easy validation)
         self.date = datetime.date(self.date.year, self.date.month, 1)
 
-        #Saving next month post creates a chain that we control with this date
-        #Last post that we will be saving cannot be past one year ahead from starter post
-        last_date = kwargs.get('last_date')
-        if last_date is None:
-            last_date = self.date + relativedelta.relativedelta(years=+1)
-
-        #Getting dates month back and month forward to calculate
-        previous_post_date = self.date - relativedelta.relativedelta(months=1)
-        next_post_date = self.date + relativedelta.relativedelta(months=1)
-
         try:
-            previous_post = user_posts.get(date__month=previous_post_date.month, date__year=previous_post_date.year)
+            # Runs if this is base post - post that is created or edited
+            # We're later updating next post with new data, so when we're saving next post we don't want
+            # this to calculate same month again
+            if not kwargs.get('last_date'):
+                # Calculating this month stats
+                calculate_month(self, user_posts)
 
-            #Gettting posts from one year back to calculate energy surplus
-            #Current post isn't included because it could be edited thus it might differ
-            date_year_back = self.date + relativedelta.relativedelta(years=-1, months=+1)
-            year_back_posts = user_posts.filter(date__range=[date_year_back, previous_post_date])
-            
-            #Calculating this month stats
-            calculate_month(self, previous_post)
-            self.energy_surplus = sum([(post.sent * energy_sent_back) - post.received for post in year_back_posts])
-
-            #Manualy adding current post data
-            self.energy_surplus += (self.sent * energy_sent_back) - self.received
-            self.energy_surplus = round(self.energy_surplus, 2)
-
-        #If there is no post in previous month we cannot calculate this month stats
+        # If there is no post in previous month we cannot calculate this month stats
         except Post.DoesNotExist as e:
-            if self.sent_all is None:
-                self.sent_all = self.sent
-            else:
-                self.sent = self.sent_all
-            if self.received_all is None:
-                self.received_all = self.received
-            else:
-                self.received = self.received_all
             if self.produced_all is None:
-                self.produced_all = self.produced
+                self.produced_all = self.produced + self.user.userconfig.produced_start
             else:
-                self.produced = self.produced_all
-            print('There is no post in previous month')
+                self.produced = self.produced_all - self.user.userconfig.produced_start
+
+            if self.received_all is None:
+                self.received_all = self.received + self.user.userconfig.received_start
+            else:
+                self.received = self.received_all -  self.user.userconfig.received_start
+
+            if self.sent_all is None:
+                self.sent_all = self.sent + self.user.userconfig.sent_start
+            else:
+                self.sent = self.sent_all - self.user.userconfig.sent_start
+            # print('There is no post in previous month')
             pass
         except Exception as e:
             print(e)
-
+        
         super(Post, self).save()
 
         try:
+            next_post_date = self.date + relativedelta.relativedelta(months=1)
             next_post = user_posts.get(date__month=next_post_date.month, date__year=next_post_date.year)
+            # Saving next month post creates a chain that we control with this date
+            # Last post that we will be saving cannot be past one year ahead from starter post
+            last_date = kwargs.get('last_date')
+            if last_date is None:
+                last_date = self.date + relativedelta.relativedelta(years=+1)
 
-            #Check if last_date is later than next post date avoiding goingh through all posts
+            # Check if last_date is later than next post date avoiding goingh through all posts
             if last_date > next_post.date:
-                calculate_month(next_post, self)
+                calculate_month(next_post, user_posts)
                 next_post.save(last_date=last_date)
 
-        #If there is no post in next month we cannot calculate stats for it
+        # If there is no post in next month we cannot calculate stats for it
         except Post.DoesNotExist as e:
-            print('There is no post in next month')
+            # print('There is no post in next month')
             pass
         except Exception as e:
             print(e)
