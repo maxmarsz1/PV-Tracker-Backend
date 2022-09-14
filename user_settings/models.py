@@ -8,7 +8,15 @@ class UserConfig(models.Model):
     produced_start = models.FloatField(('Produced starting value (inverter)'), default=0)
     received_start = models.FloatField(('Received starting value (1.8.0)'), default=0)
     sent_start = models.FloatField(('Sent starting value (2.8.0)'), default=0)
-    settlement_month = models.IntegerField(("Month of settlement (1-12)"), default=1)
+
+    PERIODS = (
+        (1, '1 month'),
+        (2, '2 months'),
+        (6, '6 months'),
+        (12, '12 months'),
+    )
+    settlement_month = models.IntegerField(("First month of settlement (1-12)"), default=1)
+    settlement_period = models.IntegerField(choices=PERIODS, default=6)
 
     BILLING = 'billing'
     METERING = 'metering'

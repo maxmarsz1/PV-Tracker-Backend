@@ -2,10 +2,16 @@ import calendar
 from dateutil.relativedelta import relativedelta
 
 def calculate_month(post, user_posts, Post):
-    user_config = post.user.userconfig
-    energy_sent_back = 0.7 if user_config.pv_power > 10 else 0.8
+    '''
+    post(Post) - Post Object to calculate
+    user_posts(Queryset) - all user posts
+    Post - PostModel used only for exception
+    '''
 
+    user_config = post.user.userconfig
     user_rules = user_config.rules
+    months = [i for i in range(1, 13)]
+    energy_sent_back = 0.7 if user_config.pv_power > 10 else 0.8
 
     try:
         previous_post_date = post.date - relativedelta(months=1)
