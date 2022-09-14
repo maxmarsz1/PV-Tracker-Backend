@@ -14,7 +14,7 @@ class PostTest(TestCase):
         date2 = date(2022, 2, 1)
         post2 = Post.objects.create(user=user, produced=111, received_all=388, sent_all=395, date=date2)
         self.assertEqual(post2.consumption, 104)
-        self.assertEqual(post2.energy_surplus_cash, -57.6)
+        self.assertEqual(post2.balance, -57.6)
 
         date3 = date(2022, 3, 1)
         post3 = Post.objects.create(user=user, produced=123, received_all=600, sent=324, date=date3)

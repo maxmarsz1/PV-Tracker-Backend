@@ -26,27 +26,27 @@ class Post(models.Model):
     # Calculated fields
     # Energy used just after production
     # produced - sent
-    autoconsumption = models.FloatField(blank=True, default=0, editable=False)
+    autoconsumption = models.FloatField(('Autoconsumption (kW)'),blank=True, default=0, editable=False)
 
     # Percentage of autoconsumption from production
     # autoconsumption / produced
-    autoconsumption_percentage = models.FloatField(blank=True, default=0, editable=False)
+    autoconsumption_percentage = models.FloatField(('Autoconsumption average (%)'), blank=True, default=0, editable=False)
 
     # Energy used this month
     # produced - sent + received
-    consumption = models.FloatField(blank=True, default=0, editable=False)
+    consumption = models.FloatField(('Consumption (kW)'), blank=True, default=0, editable=False)
 
     # Average energy used per day in month
     # consumption / count of days in month
-    consumption_average = models.FloatField(blank=True, default=0, editable=False)
+    consumption_average = models.FloatField(('Consumption average (kW/day)'), blank=True, default=0, editable=False)
 
     # Deferred energy
     # sum of (sent * 0.8 or 0.7(Based on rules user is on)) from each month year back
-    energy_surplus = models.FloatField(blank=True, default=0, editable=False)
+    energy_surplus = models.FloatField(('Energy surplus (kW)'), blank=True, default=0, editable=False)
 
     # Deferred energy in cash
     # energy_surplus * user.userconfig.energy_buy_price
-    energy_surplus_cash = models.FloatField(blank=True, default=0, editable=False)
+    balance = models.FloatField(('Balance (PLN)'), blank=True, default=0, editable=False)
 
 
     class Meta:
@@ -69,16 +69,21 @@ class Post(models.Model):
             pass
 
 
-    def save(self, *args, **kwargs):
+    def save(self, last_date=None, recalculate=None, *args, **kwargs):
+        '''
+        last_date (date) - variable used to control save chain.
+        Last post that we will be saving cannot be past one year ahead from starter post
+        last_date cannot be used with recalculate
+
+        recalculate (bool) - if set to True we recalculate every month that is later
+        recalculate cannot be used with last_date
+        '''
+
         # Setting variables
         user_posts = Post.objects.filter(user=self.user)
 
         # Setting post date to first day of the month to avoid multiple post in one month (easy validation)
         self.date = datetime.date(self.date.year, self.date.month, 1)
-
-        # Saving next month post creates a chain that we control with this date
-        # Last post that we will be saving cannot be past one year ahead from starter post
-        last_date = kwargs.get('last_date')
        
         # Runs if this is base post - post that is created or edited
         # We're later updating next post with new data, so when we're saving next post we don't want
@@ -86,7 +91,8 @@ class Post(models.Model):
         if last_date is None:
             # Calculating this month stats
             calculate_month(self, user_posts, Post)
-            last_date = self.date + relativedelta.relativedelta(years=+1)
+            if not recalculate:
+                last_date = self.date + relativedelta.relativedelta(years=+1)
 
         super(Post, self).save()
 

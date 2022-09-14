@@ -17,7 +17,8 @@ class UserConfig(models.Model):
         (METERING, 'Net-Metering (stare zasady)'),
     ]
     rules = models.CharField(("PV billing rules"), choices=RULES_CHOICES, default=METERING, max_length=50)
-    energy_buy_price = models.FloatField(("Price for 1kWh (PLN)"), default=0.8)
+    energy_buy_price = models.FloatField(("Buying price for 1kWh (PLN)"), default=0.8)
+    energy_sell_price = models.FloatField(("Selling price for 1kWh (PLN)"), default=0.8)
 
     def __str__(self):
         return f"Config: {self.user.username}"
