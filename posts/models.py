@@ -90,6 +90,7 @@ class Post(models.Model):
         # this to calculate same month again
         if last_date is None:
             # Calculating this month stats
+            print(f'Calculating this post: {self.date}')
             calculate_month(self, user_posts, Post)
             if not recalculate:
                 last_date = self.date + relativedelta.relativedelta(years=+1)

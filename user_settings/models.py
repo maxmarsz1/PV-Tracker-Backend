@@ -15,7 +15,7 @@ class UserConfig(models.Model):
         (6, '6 months'),
         (12, '12 months'),
     )
-    settlement_month = models.IntegerField(("First month of settlement (1-12)"), default=1)
+    settlement_month = models.IntegerField(("First month of settlement (1-12)"), default=6)
     settlement_period = models.IntegerField(choices=PERIODS, default=6)
 
     BILLING = 'billing'

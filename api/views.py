@@ -36,10 +36,10 @@ class ListUpdateDestroyPostView(APIView):
         posts = Post.objects.filter(date__year=pk)
         months = posts.dates('date', 'month')
         data['years'] = [date.year for date in Post.objects.all().dates('date', 'year')]
+
         sorted_posts = {}
         for month in months:
-            if not sorted_posts.get(month.month):
-                sorted_posts[month.month] = [PostSerializer(post).data for post in posts if post.date.year == month.year and post.date.month == month.month]
+            sorted_posts[month.month] = PostSerializer(posts.get(date__month=month.month)).data
         data['posts'] = sorted_posts
 
         return Response(data)

@@ -1,5 +1,14 @@
 import calendar
+from datetime import date
 from dateutil.relativedelta import relativedelta
+
+def get_settlement_months(settlement_period, settlement_month):
+    months = [i + 1 for i in range(12)]
+    settlement_months_count = int(12 / settlement_period)
+    settlement_months = [months[((settlement_month + (month * settlement_period)) - 1) % 12] for month in range(settlement_months_count)]
+    settlement_months.sort()
+    return settlement_months
+
 
 def calculate_month(post, user_posts, Post):
     '''
@@ -10,7 +19,7 @@ def calculate_month(post, user_posts, Post):
 
     user_config = post.user.userconfig
     user_rules = user_config.rules
-    months = [i for i in range(1, 13)]
+
     energy_sent_back = 0.7 if user_config.pv_power > 10 else 0.8
 
     try:
@@ -50,7 +59,6 @@ def calculate_month(post, user_posts, Post):
         else:
             post.sent = post.sent_all - user_config.sent_start
 
-
     # Gettting posts from one year back to calculate energy surplus
     # Current post isn't included because it could be edited thus it might differ
     date_year_back = post.date + relativedelta(years=-1, months=+1)
@@ -62,9 +70,12 @@ def calculate_month(post, user_posts, Post):
     post.consumption = post.produced + post.received - post.sent
     post.consumption_average = round(post.consumption / calendar.monthrange(post.date.year, post.date.month)[1], 2)
 
+    settlement_months = get_settlement_months(user_config.settlement_period, user_config.settlement_month)
+
+
     if user_rules == 'metering':
         post.energy_surplus = sum([(_post.sent * energy_sent_back) - _post.received for _post in year_back_posts])
-        
+            
         # Manualy adding current post data
         post.energy_surplus += (post.sent * energy_sent_back) - post.received
         post.energy_surplus = round(post.energy_surplus, 2)

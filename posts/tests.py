@@ -28,3 +28,9 @@ class PostTest(TestCase):
         self.assertEqual(post4.energy_surplus, -168.4)
         post5 = Post.objects.get(date=date5)
         self.assertEqual(post5.consumption_average, 10.39)
+
+        date6 = date(2022, 6, 1)
+        post6 = Post.objects.create(user=user, produced=432, received=123, sent=233, date=date6)
+
+        date7 = date(2022, 7, 1)
+        post7 = Post.objects.create(user=user, produced=432, received=123, sent=233, date=date7)
