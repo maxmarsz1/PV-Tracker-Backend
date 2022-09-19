@@ -42,11 +42,18 @@ class Post(models.Model):
 
     # Deferred energy
     # sum of (sent * 0.8 or 0.7(Based on rules user is on)) from each month year back
+    # if in previous settlement month this value was negative, we are not adding it to next posts
+    # because it would be already settled
     energy_surplus = models.FloatField(('Energy surplus (kW)'), blank=True, default=0, editable=False)
 
     # Deferred energy in cash
-    # energy_surplus * user.userconfig.energy_buy_price
+    # net-metering -> energy_surplus * user.userconfig.energy_buy_price
+    # net-biling -> sent * user.userconfig.energy_sell_price - (received * user.userconfig.energy_buy_price)
     balance = models.FloatField(('Balance (PLN)'), blank=True, default=0, editable=False)
+
+    #Funds saved with PV
+
+    saved_funds = models.FloatField(('Saved funds (PLN)'), blank=True, default=0, editable=False)
 
 
     class Meta:
@@ -90,7 +97,7 @@ class Post(models.Model):
         # this to calculate same month again
         if last_date is None:
             # Calculating this month stats
-            print(f'Calculating this post: {self.date}')
+            # print(f'Calculating this post: {self.date}')
             calculate_month(self, user_posts, Post)
             if not recalculate:
                 last_date = self.date + relativedelta.relativedelta(years=+1)

@@ -69,13 +69,11 @@ def calculate_month(post, user_posts, Post):
     post.autoconsumption_percentage = round(post.autoconsumption / post.produced, 2)
     post.consumption = post.produced + post.received - post.sent
     post.consumption_average = round(post.consumption / calendar.monthrange(post.date.year, post.date.month)[1], 2)
+    post.saved_funds = post.autoconsumption + post.sent * user_config.energy_buy_price
 
     settlement_months = get_settlement_months(user_config.settlement_period, user_config.settlement_month)
 
-    
-
     if user_rules == 'metering':
-
         for _post in year_back_posts:
             if _post.date.month in settlement_months: 
                 if _post.energy_surplus > 0:
@@ -83,14 +81,20 @@ def calculate_month(post, user_posts, Post):
                 break
             post.energy_surplus += (_post.sent * energy_sent_back) - _post.received
             
-        
         # Manualy adding current post data
         post.energy_surplus += (post.sent * energy_sent_back) - post.received
         post.energy_surplus = round(post.energy_surplus, 2)
 
         post.balance = round(post.energy_surplus * user_config.energy_sell_price, 2)
 
+
     if user_rules == 'billing':
-        post.balance = sum([(_post.sent * user_config.energy_sell_price) - (_post.received * user_config.energy_buy_price)  for _post in year_back_posts])
+        for _post in year_back_posts:
+            if _post.date.month in settlement_months: 
+                if _post.balance > 0:
+                    post.balance += _post.balance
+                break
+            post.balance += (_post.sent * user_config.energy_sell_price) - (_post.received * user_config.energy_buy_price)
+
         post.balance += (post.sent * user_config.energy_sell_price) - (post.received * user_config.energy_buy_price)
         post.balance = round(post.balance, 2)

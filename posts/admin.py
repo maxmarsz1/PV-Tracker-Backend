@@ -6,6 +6,6 @@ from .models import Post
 
 
 class MyAdmin(admin.ModelAdmin):
-    readonly_fields = ['autoconsumption', 'autoconsumption_percentage', 'consumption', 'consumption_average', 'energy_surplus', 'balance']
+    readonly_fields = ['autoconsumption', 'autoconsumption_percentage', 'consumption', 'consumption_average', 'energy_surplus', 'balance', 'saved_funds']
 
 admin.site.register(Post, MyAdmin)
