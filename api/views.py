@@ -23,10 +23,11 @@ class UserRegisterView(APIView):
 
 class CreatePostView(APIView):
     def post(self, request):
-        post = PostSerializer(data=request.data)
+        post = PostSerializer(data=request.data, partial=True)
         if post.is_valid():
             post.save()
             return Response(post.data)
+        print(post.errors)
         return Response('Something went wrong', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

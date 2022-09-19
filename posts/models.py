@@ -13,14 +13,14 @@ class Post(models.Model):
 
     #Fields to fill
     #Energy stats for this month
-    produced_all = models.FloatField(blank=True)
-    received_all = models.FloatField(blank=True)
-    sent_all = models.FloatField(blank=True)
+    produced_all = models.FloatField(blank=True, null=True, default=None)
+    received_all = models.FloatField(blank=True, null=True)
+    sent_all = models.FloatField(blank=True, null=True)
 
     #Energy stats from meter
-    produced = models.FloatField(blank=True)
-    received = models.FloatField(blank=True)
-    sent = models.FloatField(blank=True)
+    produced = models.FloatField(blank=True, null=True)
+    received = models.FloatField(blank=True, null=True)
+    sent = models.FloatField(blank=True, null=True)
     date = models.DateField()
 
     # Calculated fields

@@ -30,7 +30,10 @@ class PostTest(TestCase):
         self.assertEqual(post5.consumption_average, 10.39)
 
         date6 = date(2022, 6, 1)
-        post6 = Post.objects.create(user=user, produced=432, received=123, sent=233, date=date6)
+        post6 = Post.objects.create(user=user, produced=678, received=167, sent=270, date=date6)
+        self.assertEqual(post6.energy_surplus, -56)
 
         date7 = date(2022, 7, 1)
-        post7 = Post.objects.create(user=user, produced=432, received=123, sent=233, date=date7)
+        post7 = Post.objects.create(user=user, produced=1024, received=122, sent=333, date=date7)
+        self.assertEqual(post7.consumption_average, 26.23)
+        self.assertEqual(post7.energy_surplus, 144.4)

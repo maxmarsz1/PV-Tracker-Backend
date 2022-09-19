@@ -10,6 +10,7 @@ class PostSerializer(ModelSerializer):
         fields = '__all__'
 
 
+
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User

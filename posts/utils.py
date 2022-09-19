@@ -72,10 +72,18 @@ def calculate_month(post, user_posts, Post):
 
     settlement_months = get_settlement_months(user_config.settlement_period, user_config.settlement_month)
 
+    
 
     if user_rules == 'metering':
-        post.energy_surplus = sum([(_post.sent * energy_sent_back) - _post.received for _post in year_back_posts])
+
+        for _post in year_back_posts:
+            if _post.date.month in settlement_months: 
+                if _post.energy_surplus > 0:
+                    post.energy_surplus += _post.energy_surplus
+                break
+            post.energy_surplus += (_post.sent * energy_sent_back) - _post.received
             
+        
         # Manualy adding current post data
         post.energy_surplus += (post.sent * energy_sent_back) - post.received
         post.energy_surplus = round(post.energy_surplus, 2)
