@@ -2,6 +2,7 @@ import calendar
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
+
 def get_settlement_months(settlement_period, settlement_month):
     months = [i + 1 for i in range(12)]
     settlement_months_count = int(12 / settlement_period)
