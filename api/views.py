@@ -5,8 +5,10 @@ from django.contrib.auth.models import User
 from django.utils.timezone import now
 
 from posts.models import Post
-from .serializers import PostSerializer, UserSerializer
+from user_settings.models import UserConfig
+from .serializers import PostSerializer, UserSerializer, UserConfigSerializer
 from .utils import prepare_posts
+
 
 
 class UserRegisterView(APIView):
@@ -20,6 +22,25 @@ class UserRegisterView(APIView):
         user.set_password(password)
         user.save()
         return Response(status=status.HTTP_201_CREATED)
+
+
+class UserConfigView(APIView):
+    def get(self, request, pk):
+        # Secure this when user auth will be included
+        # config = UserConfig.objects.get(user=request.user)
+        config = UserConfig.objects.get(user__id=pk)
+        serialized = UserConfigSerializer(config)
+        return Response(serialized.data)
+
+    def post(self, request, pk):
+        # Secure this when user auth will be included
+        # config = UserConfig.objects.get(user=request.user)
+        config = UserConfig.objects.get(user__id=pk)
+        serialized = UserConfigSerializer(config, request.data)
+        if serialized.is_valid():
+            serialized.save()
+            return Response(serialized.data)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreatePostView(APIView):
