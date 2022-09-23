@@ -47,8 +47,8 @@ class CreatePostView(APIView):
     def post(self, request):
         post = PostSerializer(data=request.data, partial=True)
         if post.is_valid():
-            post.save()
-            posts = Post.objects.filter(date__year=post.data.date.year)
+            post = post.save()
+            posts = Post.objects.filter(date__year=post.date.year)
             return Response(prepare_posts(posts))
         print(post.errors)
         return Response('Something went wrong', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
