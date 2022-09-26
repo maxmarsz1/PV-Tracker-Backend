@@ -32,7 +32,7 @@ class UserConfigView(APIView):
         serialized = UserConfigSerializer(config)
         return Response(serialized.data)
 
-    def post(self, request, pk):
+    def patch(self, request, pk):
         # Secure this when user auth will be included
         # config = UserConfig.objects.get(user=request.user)
         config = UserConfig.objects.get(user__id=pk)
@@ -40,6 +40,7 @@ class UserConfigView(APIView):
         if serialized.is_valid():
             serialized.save()
             return Response(serialized.data)
+        print(serialized.errors)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -52,6 +53,14 @@ class CreatePostView(APIView):
             return Response(prepare_posts(posts))
         print(post.errors)
         return Response('Something went wrong', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+    def patch(self, request):
+        print(Post.objects.filter(user__id=1).order_by('date'))
+        last_post = Post.objects.filter(user__id=1).order_by('date').first()
+        last_post.save(recalculate=True)
+        posts = Post.objects.filter(date__year=request.data['year'])
+        return Response(prepare_posts(posts))
 
 
 class ListUpdateDestroyPostView(APIView):

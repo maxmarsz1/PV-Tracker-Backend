@@ -52,7 +52,6 @@ class Post(models.Model):
     balance = models.FloatField(('Balance (PLN)'), blank=True, default=0, editable=False)
 
     #Funds saved with PV
-
     saved_funds = models.FloatField(('Saved funds (PLN)'), blank=True, default=0, editable=False)
 
 
@@ -109,7 +108,8 @@ class Post(models.Model):
             next_post = user_posts.get(date__month=next_post_date.month, date__year=next_post_date.year)
 
             # Check if last_date is later than next post date avoiding goingh through all posts
-            if last_date > next_post.date:
+            # or if recalculate is set to True, then go through all posts forward
+            if last_date is not None and last_date > next_post.date or recalculate:
                 calculate_month(next_post, user_posts, Post)
                 next_post.save(last_date=last_date)
 

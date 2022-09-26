@@ -75,11 +75,19 @@ def calculate_month(post, user_posts, Post):
     settlement_months = get_settlement_months(user_config.settlement_period, user_config.settlement_month)
 
     if user_rules == 'metering':
+        # Reseting values, because when editing already existing post we would be constantly
+        # increasing value
+        post.energy_surplus = 0
+        
+        # Going back through post from year back until we find settlement month
         for _post in year_back_posts:
+            # If we catch settlement month and it's value is greater than 0, then we add
+            # whole energy surplus from this period
             if _post.date.month in settlement_months: 
                 if _post.energy_surplus > 0:
                     post.energy_surplus += _post.energy_surplus
                 break
+            # else we're just adding saved/negative energy
             post.energy_surplus += (_post.sent * energy_sent_back) - _post.received
             
         # Manualy adding current post data
@@ -90,12 +98,18 @@ def calculate_month(post, user_posts, Post):
 
 
     if user_rules == 'billing':
+        # Reseting values, because when editing already existing post we would be constantly
+        # increasing value
+        post.energy_surplus = 0
+        post.balance = 0
+        
+        # Same thing as in metering
         for _post in year_back_posts:
             if _post.date.month in settlement_months: 
                 if _post.balance > 0:
                     post.balance += _post.balance
                 break
-            post.balance += (_post.sent * user_config.energy_sell_price) - (_post.received * user_config.energy_buy_price)
+            post.balance += (_post.sent * energy_sent_back * user_config.energy_sell_price) - (_post.received * user_config.energy_buy_price)
 
-        post.balance += (post.sent * user_config.energy_sell_price) - (post.received * user_config.energy_buy_price)
+        post.balance += (post.sent * energy_sent_back * user_config.energy_sell_price) - (post.received * user_config.energy_buy_price)
         post.balance = round(post.balance, 2)
