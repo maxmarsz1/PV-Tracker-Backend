@@ -56,7 +56,6 @@ class CreatePostView(APIView):
     
     
     def patch(self, request):
-        print(Post.objects.filter(user__id=1).order_by('date'))
         last_post = Post.objects.filter(user__id=1).order_by('date').first()
         last_post.save(recalculate=True)
         posts = Post.objects.filter(date__year=request.data['year'])
@@ -71,6 +70,11 @@ class ListUpdateDestroyPostView(APIView):
 
     def patch(self, request, pk):
         post = Post.objects.get(id=pk)
+        # Making sure user has not changed user in request
+        # if request.user != request.data['user'] :
+        if post.user.id != request.data['user']:
+            return Response('Someone is doing something nasty!', status=status.HTTP_400_BAD_REQUEST)
+        
         post_serialized = PostSerializer(post, data=request.data, partial=True)
         if post_serialized.is_valid():
             post_serialized.save()

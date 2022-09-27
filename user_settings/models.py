@@ -8,6 +8,13 @@ class UserConfig(models.Model):
     produced_start = models.FloatField(('Produced starting value (inverter)'), default=0)
     received_start = models.FloatField(('Received starting value (1.8.0)'), default=0)
     sent_start = models.FloatField(('Sent starting value (2.8.0)'), default=0)
+    INPUT_CHOICES = (
+        ('all', "All time"),
+        ('month', "Month")
+    )
+    produced_input = models.CharField(max_length=5, choices=INPUT_CHOICES, default='all')
+    received_input = models.CharField(max_length=5, choices=INPUT_CHOICES, default='all')
+    sent_input = models.CharField(max_length=5, choices=INPUT_CHOICES, default='all')
 
     PERIODS = (
         (1, '1 month'),

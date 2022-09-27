@@ -28,20 +28,20 @@ def calculate_month(post, user_posts, Post):
         previous_post = user_posts.get(date__month=previous_post_date.month, date__year=previous_post_date.year)
 
         # Setting required data based on previous month
-        if post.sent is None:
-            post.sent = post.sent_all - previous_post.sent_all
+        if post.produced is None or user_config.produced_input == 'all':
+            post.produced = post.produced_all - previous_post.produced_all
         else:
-            post.sent_all = post.sent + previous_post.sent_all
-        
-        if post.received is None:
+            post.produced_all = post.produced + previous_post.produced_all
+            
+        if post.received is None or user_config.received_input == 'all':
             post.received = post.received_all - previous_post.received_all
         else:
             post.received_all = post.received + previous_post.received_all
 
-        if post.produced is None:
-            post.produced = post.produced_all - previous_post.produced_all
+        if post.sent is None or user_config.sent_input == 'all':
+            post.sent = post.sent_all - previous_post.sent_all
         else:
-            post.produced_all = post.produced + previous_post.produced_all
+            post.sent_all = post.sent + previous_post.sent_all
     
     # If there is no post in previous month we calculate based only on this month
     except Post.DoesNotExist:
